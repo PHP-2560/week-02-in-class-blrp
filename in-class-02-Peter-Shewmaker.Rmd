@@ -91,30 +91,63 @@ The `dplyr` package uses verbs to perform data manipulation.
 
 1. Filter all flights on your birthday.
 ```{r}
-#My birthday is 04/04/1992, so I filter for that date in the flights tbl.
-filter(flights, year == 1992 & month == 4 & day == 4)
+#My birthday is April 4th, so I filter for that date in the flights tbl.
+filter(flights, month == 4 & day == 4)
 ```
 2. Filter all flights in rows 567 - 589
+```{r}
+#We don't need to use the dplyr function filter to select a set of rows.
+flights[567:589, ]
+```
 
 
 ### Arranging Rows
 3. Use arrange() to order the data by year, month and day
+```{r}
+#This uses the dplyr function arrange to sort the data by year, month and day.
+arrange(flights, year, month, day)
+```
 4. Use desc() to arrange flights by arrival delay.
-
+```{r}
+#Adding desc() to the argument of arrange will sort the data in descending order (ascending is the default). The data is then sorted by arrival delay in descending order.
+arrange(flights, desc(arr_delay))
+```
 
 ### Select
-5. Select columns containing data information.
+5. Select columns containing date information.
+```{r}
+#This uses the dplyr function select to take out only the columns with date information (year, month, day).
+select(flights, year, month, day)
+```
 6. Select columns including only plane information.
+```{r}
+#Again, this uses the select function to take out the columns with plane information (carrier, tailnum)
+select(flights, carrier, tailnum)
+```
 7. Rename tailnum to tail_num
-
+```{r}
+#The rename function can change the column named "tailnum" to "tail_num", note the new name goes first in the second argument of the function.
+rename(flights, tail_num = tailnum)
+```
 
 ### Mutating Rows
 8. Create a variable called gain which describes the difference between arrival delap and departure delay.
+```{r}
+#The mutate function can add new columns to a table that use data from existing columns. This can be used to add a new column "gain" which is the difference of arrival delay and departure delay.
+mutate(flights, gain = arr_delay - dep_delay)
+```
 9. Create a variable called speed which is distance over time in hours.
-
+```{r}
+#The mutate function is used again to add a speed variable to the tbl.
+mutate(flights, speed = distance/(air_time/60))
+```
 
 ###Summarise
 10. Summarise the average delay for all flights.
+```{r}
+#This summary gives the average departure delay for all flights, with NA's and negative numbers removed (so for all flights that did have a departure delay).
+summarise(flights, average_delay = mean(dep_delay[!is.na(dep_delay) & dep_delay > 0]))
+```
 
 ## Overall Questions
 
