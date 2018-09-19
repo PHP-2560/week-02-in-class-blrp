@@ -2,10 +2,10 @@
 
 Have one person fill in the names of who is doing this:
 
-1. _______________________________
-2. _______________________________
-3. _______________________________
-4. _______________________________
+1. Seungbo Choi
+2. Lauren Bergam
+3. Ryan Buckland
+4. Peter Shewmaker
 
 # In-Class
 
