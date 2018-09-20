@@ -1,0 +1,310 @@
+# In-Class: September 19, 2018
+
+
+## Part 1 (You can do this with or without dplyr)
+
+1. The data set at rnf6080.dat records hourly rainfall at a certain location in Canada, every day from 1960 to 1980. First, we need to load the data set into R using the command read.table(). Use the help function to learn what arguments this function takes. Once you have the necessary input, load the data set into R and make it a data frame called rain.df.
+
+```{r}
+#This line creates a new data frame called rain.df that takes in the data from the "rnf6080.dat" file.
+rain.df <- read.table("rnf6080.dat")
+```
+
+2. How many rows and columns does rain.df have? (If there are not 5070 rows and 27 columns, something is wrong; check the previous part to see what might have gone wrong in the previous part.)
+
+```{r}
+#The function dim tells you how many rows and columns you have, we use it on the rain.df data frame to see its size.
+dim(rain.df)
+```
+
+3. What are the names of the columns of rain.df?
+```{r}
+#The names function tells you have the names of a column of a data frame.
+names(rain.df)
+```
+
+4. What is the value of row 5, column 7 of rain.df?
+```{r}
+#Calling the name of a data frame with the indices you are interested in will display that entry:
+rain.df[5,7]
+```
+
+5. Display the second row of rain.df in its entirety.
+```{r}
+#If you are interested in an entire row of a data frame, just leave the column index blank:
+rain.df[2, ]
+```
+6. Explain what the command below doesby running it on your data and examining the object. (You may find the display functions head() and tail() useful here.) Is it clear now what the last 24 columns represent?
+```{r}
+names(rain.df) <- c("year","month","day",seq(0,23))
+#This bit of code gives names to the columns, making it clear that the first three columns give the date of the measurement taken. The next 24 columns tell you the amount of rainfall in each of those hours.
+```
+
+7. Create a new column in the data frame called daily, which is the sum of the rightmost 24 columns. With this column, create a histogram of the values in this column, which are supposed to be daily rainfall values. What is wrong with this picture?
+```{r}
+#We load the dplyr library to use some of its functions for data manipulation.
+library(dplyr)
+#The mutate function adds a new column from some function of the existing data, it's used to calculate the sum of the hourly rainfall to get a daily rainfall value.
+rain.df.daily <- mutate(rain.df, daily = rowSums(rain.df[,4:27]))
+#Then a histogram is made of the daily rain values.
+hist(rain.df.daily$daily)
+#There are large negative numbers in the histogram, which obviously does not make sense for daily rainfall.
+```
+8. Create a new data frame rain.df.fixed that takes the original and fixes it for the apparent flaw you have discovered. Having done this, produce a new histogram with the corrected data and explain why this is more reasonable.
+```{r}
+#Some of the data entries are -999, which means that the data was not acquired for some reason - these will be changed to NAs.
+rain.df.daily[rain.df.daily < 0] = NA
+rain.df.fixed <- rain.df.daily
+#Now we reproduce the histogram.
+hist(rain.df.fixed$daily)
+#This histogram makes more since, most of the days have little or no rainfall, with some days having larger amounts of rain.
+```
+
+
+## Part 2
+### New York City Flights 13
+
+- `flights` [336,776 x 16]. Every flight leaving NYC in 2013.
+- `weather` [ 8719 x 14]. Hourly Weather Data.
+- `planes` [3322 x 9]. Plane data.
+- `airports` [1397 x 7]. Airport data.
+
+
+```{r}
+library(nycflights13)
+library(dplyr)
+library(ggplot2)
+flights
+```
+
+### Basic Dplyr
+
+The `dplyr` package uses verbs to perform data manipulation.
+
+- `filter()` and `slice()`
+- `arrange()`
+- `select()` and `rename()`
+- `distinct()`
+- `mutate()` and `transmute()`
+- `sample_n()` and `sample_frac()`
+
+### Filtering Rows
+
+1. Filter all flights on your birthday.
+```{r}
+#My birthday is April 4th, so I filter for that date in the flights tbl.
+filter(flights, month == 4 & day == 4)
+```
+2. Filter all flights in rows 567 - 589
+```{r}
+#We don't need to use the dplyr function filter to select a set of rows.
+flights[567:589, ]
+```
+
+
+### Arranging Rows
+3. Use arrange() to order the data by year, month and day
+```{r}
+#This uses the dplyr function arrange to sort the data by year, month and day.
+arrange(flights, year, month, day)
+```
+4. Use desc() to arrange flights by arrival delay.
+```{r}
+#Adding desc() to the argument of arrange will sort the data in descending order (ascending is the default). The data is then sorted by arrival delay in descending order.
+arrange(flights, desc(arr_delay))
+```
+
+### Select
+5. Select columns containing date information.
+```{r}
+#This uses the dplyr function select to take out only the columns with date information (year, month, day).
+select(flights, year, month, day)
+```
+6. Select columns including only plane information.
+```{r}
+#Again, this uses the select function to take out the columns with plane information (carrier, tailnum)
+select(flights, carrier, tailnum)
+```
+7. Rename tailnum to tail_num
+```{r}
+#The rename function can change the column named "tailnum" to "tail_num", note the new name goes first in the second argument of the function.
+flights <- rename(flights, tail_num = tailnum)
+```
+
+### Mutating Rows
+8. Create a variable called gain which describes the difference between arrival delap and departure delay.
+```{r}
+#The mutate function can add new columns to a table that use data from existing columns. This can be used to add a new column "gain" which is the difference of arrival delay and departure delay.
+mutate(flights, gain = arr_delay - dep_delay)
+```
+9. Create a variable called speed which is distance over time in hours.
+```{r}
+#The mutate function is used again to add a speed variable to the tbl.
+mutate(flights, speed = distance/(air_time/60))
+```
+
+###Summarise
+10. Summarise the average delay for all flights.
+```{r}
+#This summary gives the average arrival delay for all flights, with NA's removed.
+summarise(flights, average_delay = mean(arr_delay[!is.na(arr_delay)]))
+```
+
+## Overall Questions
+
+11. Split the complete dataset into individual planes and then summarise each plane by counting the number of flights (count = n()) and computing the average distance and arrival delay . Then plot this:
+
+```
+ggplot(delay, aes(dist, delay)) +
+  geom_point(aes(size = count), alpha = 1/2) +
+  geom_smooth() +
+  scale_size_area()
+```
+```{r}
+#The group_by function can be used to split the dataset into individual planes (which are distinguished by their tail number). After the planes are grouped, the summarise function can count the number of flights for each plane and their average distance and arrival delay (again the NA's are removed).
+delay <- flights %>% 
+  group_by(tail_num) %>%
+    summarise(count = n(), dist = mean(distance[!is.na(distance)]), delay = mean(arr_delay[!is.na(arr_delay)]))
+
+ggplot(delay, aes(dist, delay)) +
+  geom_point(aes(size = count), alpha = 1/2) +
+  geom_smooth() +
+  scale_size_area()
+
+#Each individual plane is represented as a dot on the graph, with its average distance travelled plotted against its average delay in arrival. The size of the dot gives an idea of how many flights the plane has made, with a key to the sizes given on the graph.
+```
+
+12. Find the number of planes and the number of flights that go to each possible destination.
+```{r}
+#First, you have to group by the destination of the flights. Then, to summarise - first the number of planes is equal to the number of distinct tail numbers that go to a particular destination, this can be obtained with the n_distinct function. Finally, the number of flights is just equal to the number of observations for each destination, which can be obtained with the n() function.
+flights %>%
+  group_by(dest) %>%
+    summarise(num_planes = n_distinct(tail_num), num_flights = n())
+```
+
+
+### More Difficult
+
+In the videos we learned about piping our commands. The goal of piping is to help use with the flow of our analysis. The steps we take are:
+- Think about it. 
+- Describe it. 
+- Do it.
+
+13. Consider the code Below:
+
+```
+filter(
+  summarise(
+    select(
+      group_by(flights, year, month, day),
+      arr_delay, dep_delay
+    ),
+    arr = mean(arr_delay, na.rm = TRUE),
+    dep = mean(dep_delay, na.rm = TRUE)
+  ),
+  arr > 30 | dep > 30
+)
+```
+
+a. What are some problems with this function?
+
+*It's not clear what order the functions are being called in. It seems like the filter function is being called first, but in fact it is the last function that is applied. It's not clear what is intended to be done, so it could use some comments.*
+
+b. How easy is it to follow the logic of this?
+
+*It's difficult, since it is not clear what the arguments for the filter, summarise, select functions are, since they are on different lines from the original call. It's not immediately clear what the data set that is being operated on is, since the "flights" tbl is not mentioned until the functions have all been declared. The piping will immediately declare the data set being worked on, and the functions will be applied in a more intuitive order.*
+
+c. Rewrite this using piping to make it more understandable.
+```{r}
+#This is the above function rewritten with piping. After each function is called, what it does will be described.
+flights %>%
+  
+  group_by(year, month, day) %>% #This groups the flights by their date.
+  
+    select(arr_delay, dep_delay) %>% #The columns of arrival delay and departure delay are selected.
+  
+      summarise(arr = mean(arr_delay, na.rm = TRUE), dep = mean(dep_delay, na.rm = TRUE)) %>% #The average arrival delay and departure delay for each day are given by the summarise function, with NA entries removed.
+  
+        filter(arr > 30 | dep > 30) #Only the days where the arrival arrival delay or departure delay is greater than 30 are included.
+
+#To sum up: the resulting table gives the days of the year where either the average arrival delay or average departure delay is greater than 30 minutes.
+```
+d. Does your rewritten command give the same results?
+```{r}
+#Check to see the functions produce the same results.
+version1 <- filter(
+  summarise(
+    select(
+      group_by(flights, year, month, day),
+      arr_delay, dep_delay
+    ),
+    arr = mean(arr_delay, na.rm = TRUE),
+    dep = mean(dep_delay, na.rm = TRUE)
+  ),
+  arr > 30 | dep > 30
+)
+
+version2 <- flights %>%
+  group_by(year, month, day) %>% 
+    select(arr_delay, dep_delay) %>% 
+      summarise(arr = mean(arr_delay, na.rm = TRUE), dep = mean(dep_delay, na.rm = TRUE)) %>% 
+        filter(arr > 30 | dep > 30)
+
+all.equal(version1, version2)
+
+#The all.equal function confirms that version1 and version2 both give the same table.
+```
+
+14. Consider the code below
+
+```
+hourly_delay <- filter(
+  summarise(
+    group_by(
+      filter(
+        flights, 
+        !is.na(dep_delay)
+      ),
+      date, hour
+    ),
+    delay=mean(dep_delay),
+    n=n()
+  ),
+  n>10
+)
+```
+
+1. What are some problems with this function?
+
+*The difficulties are the same as the previous function - it's not clear which order the functions are called in. We know that the new table is supposed to denote "hourly delay", but it is not immediately clear how that is calculated. There is another more serious problem, which is that the function throws an error because there is no "date" column in the "flights" data set - this new column must first be created with the mutate function.*
+
+b. How easy is it to follow the logic of this?
+
+*The same problems as in the previous function, the arguments to the functions are not on the same line, the functions are written in a way that is not intuitive, it's not obvious what data set is being worked on. The piping will help to clear this up.*
+
+c. Rewrite this using piping to make it more understandable.
+```{r}
+#This is the above function rewritten with piping. After each function is called, what it does will be described.
+
+hourly_delay <- flights %>% 
+  
+  mutate(date = as.Date(with(flights, paste(year, month, day,sep="-")), "%Y-%m-%d")) %>% #The mutate function adds a column that gives the date of each flight, using the three separate columns for year, month and day. This is not done in the original version of this function.
+  
+    filter(!is.na(dep_delay)) %>% #The observations where the departure delay is NA are filtered out.
+      
+        group_by(date, hour) %>% #Then the flights are grouped by date (which is now a column) and hour.
+  
+          summarise(delay = mean(dep_delay), n = n()) %>% #Then the average delay is given for each flight every hour of every day, along with the number of flights that hour. 
+  
+            filter(n > 10) #Finally, only the hours where there were at least 10 flights are included.
+
+#To sum up: the function tells you, for every hour of every day recorded, the average departure delay and number of flights in that hour, as long as more than 10 flights left that hour.
+hourly_delay
+```
+
+d. Does your rewritten command give the same results?
+
+*It's not clear, since the original command does not function, but it accomplishes what the original function intended to accomplish.*
+
+
+**Consider how to join information from the other datasets in the package with the current information. Is there a way to tell if weather affected the departure time? Ask yourself other questions about this data and then answer them below.**
