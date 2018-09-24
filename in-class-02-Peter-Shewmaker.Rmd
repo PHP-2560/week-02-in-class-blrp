@@ -308,3 +308,36 @@ d. Does your rewritten command give the same results?
 
 
 **Consider how to join information from the other datasets in the package with the current information. Is there a way to tell if weather affected the departure time? Ask yourself other questions about this data and then answer them below.**
+
+*First we can see if the amount of precipitation has any effect on the departure time.*
+```{r}
+#inner_join(x, y): Return all rows from x where there are matching values in y, and all columns from x and y. If there are multiple matches between x and y, all combination of the matches are returned. (from the documentation of inner_join)
+#This function allows us to join the flights data and the weather data, thus giving information about the weather at the time of each of the flights (some flights are not included because there was no weather data at that time).
+flights_with_weather <- inner_join(flights, weather)
+
+#To look at some basic data, we can filter the flights to the ones that had a departure delay of at least 30 minutes and any amount of precipitation.
+filter(flights_with_weather, dep_delay > 30 & precip > 0)
+#There are 6246 flights that had a greater than 30 minute delay when there was some rain.
+
+#Perhaps we could group_by different precipitation values, and then see the average dep_delay for each of those values.
+precip_delay <- flights_with_weather %>%
+  group_by(precip) %>%
+    summarise(avg_dep_delay = mean(dep_delay[!is.na(dep_delay)]))
+precip_delay
+#Then you can calculate the correlation between the precipitation and the average departure delay.
+cor(precip_delay$precip, precip_delay$avg_dep_delay)
+#So there is a moderate correlation between precipitation and average departure delay.
+
+#You could do a similar experiment with visibility instead of precipitation.
+visib_delay <- flights_with_weather %>%
+  group_by(visib) %>%
+    summarise(avg_dep_delay = mean(dep_delay[!is.na(dep_delay)]))
+visib_delay
+
+cor(visib_delay$visib, visib_delay$avg_dep_delay)
+#There is a strong correlation between low visibility and departure delays.
+
+#Basic plots of precipitation and visibility versus average depature delays.
+plot(precip_delay$precip, precip_delay$avg_dep_delay)
+plot(visib_delay$visib, visib_delay$avg_dep_delay)
+```
