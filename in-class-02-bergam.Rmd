@@ -57,10 +57,11 @@ head(rain.df)
 
 ```{r}
 #Rainfall sum for each day
-daily.rain<-mutate(rain.df, rowSums(rain.df[,4:27]))
-daily<-rowSums(rain.df[,4:27])
+library(dplyr)
+daily.rain<-mutate(rain.df, daily = rowSums(rain.df[,4:27]))
 
-hist(daily)
+
+hist(daily.rain$daily)
 
 
 ```
@@ -68,11 +69,11 @@ hist(daily)
 8. Create a new data frame rain.df.fixed that takes the original and fixes it for the apparent flaw you have discovered. Having done this, produce a new histogram with the corrected data and explain why this is more reasonable.
 
 ```{r}
-daily.rain[daily < 0] <- "na"
+daily.rain[daily.rain < 0] = NA
 
 rain.df.fixed <- daily.rain
 
-hist(rain.df.fixed)
+hist(rain.df.fixed$daily)
 
 ```
 
