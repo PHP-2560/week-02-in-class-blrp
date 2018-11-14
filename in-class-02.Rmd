@@ -41,7 +41,7 @@ names(rain.df) <- c("year","month","day",seq(0,23))
 ```
 
 7. Create a new column in the data frame called daily, which is the sum of the rightmost 24 columns. With this column, create a histogram of the values in this column, which are supposed to be daily rainfall values. What is wrong with this picture?
-```{r}
+```{r,warning=F}
 #We load the dplyr library to use some of its functions for data manipulation.
 library(dplyr)
 #The mutate function adds a new column from some function of the existing data, it's used to calculate the sum of the hourly rainfall to get a daily rainfall value.
